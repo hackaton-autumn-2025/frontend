@@ -28,7 +28,7 @@ export const usePointHistoryStore =
             worktime: `${point.work_start} — ${point.work_end}`,
             lunch: `${point.lunch_start} — ${point.lunch_end}`,
             transport: point.transport_mode,
-            level: point.priority || '—',
+            level: point.client_level || '—',
             stop_duration: ''
         })
     }

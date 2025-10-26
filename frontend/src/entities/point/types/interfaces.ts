@@ -8,7 +8,7 @@ export interface RoutePoint {
     lunch_start: string
     lunch_end: string
     transport_mode: string
-    priority: string
+    client_level: string
     time_to_stop: string
     start_time: string
 }
