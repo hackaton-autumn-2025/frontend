@@ -12,14 +12,13 @@ RUN npm run build
 # Этап продакшена
 FROM node:20-alpine AS runner
 
-WORKDIR /app
-
 COPY --from=builder /app/dist ./dist
 COPY package*.json ./
+COPY package-lock.json ./
 
-RUN npm ci --omit=dev
+# Устанавливаем все зависимости (включая dev)
+RUN npm ci
 
 EXPOSE 3000
 
-# Запускаем встроенный сервер Vite (preview)
 CMD ["npm", "run", "preview"]
