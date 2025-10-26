@@ -31,8 +31,6 @@ const toggleMobileMenu = () => {
       </v-sheet>
 
       <v-sheet class="desktop-menu d-flex ga-6 align-center">
-        <router-link to="/demo" class="link">Демо</router-link>
-        <router-link to="/analytics" class="link">Аналитика</router-link>
         <router-link to="/dashboard" class="link">Построить маршрут</router-link>
         <v-btn class="user-pill" @click="goToProfile">
           <v-sheet class="user-name inter-bold">{{ user.name }}</v-sheet>
