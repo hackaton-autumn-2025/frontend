@@ -19,6 +19,10 @@ export default defineConfig({
     },
     preview: {
         host: '0.0.0.0',
-        port: 3000
+        port: 3000,
+        allowedHosts: [
+            '0.0.0.0',
+            'hack.pakosti.online'
+        ]
     }
 })
