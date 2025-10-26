@@ -14,13 +14,13 @@ const props = defineProps<UploadCsvDialogProps>()
 <template>
   <v-dialog v-model="props.csvDialog" max-width="500">
     <v-card>
-      <v-card-title class="text-h6 pa-6">Загрузка CSV файла</v-card-title>
+      <v-card-title class="text-h6 pa-6">Загрузка CSV/XLSX файла</v-card-title>
       <v-card-text>
         <v-file-input
             :model-value="props.selectedFile"
             @update:model-value="props.updateSelectedFile"
-            label="Выберите CSV файл"
-            accept=".csv"
+            label="Выберите CSV/XLSX файл"
+            accept=".csv, .xlsx"
             :prepend-icon="false"
             variant="outlined"
             class=""

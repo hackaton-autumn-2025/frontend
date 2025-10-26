@@ -1,7 +1,9 @@
 import Papa from 'papaparse'
-import {RouteHistoryEntry} from "@/entities/point/store/point-history-store";
+import * as XLSX from 'xlsx'
+import { RouteHistoryEntry } from "@/entities/point/store/point-history-store";
 
-export default function useParseCSV() {
+export default function useParseFile() {
+    // --- CSV ---
     const parseLocalCSV = async (file: File): Promise<RouteHistoryEntry[]> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader()
@@ -29,7 +31,7 @@ export default function useParseCSV() {
         })
     }
 
-    const parsePublicSheet = async (sheetId: string): Promise<RouteHistoryEntry[]> => {
+    const parsePublicSheetCSV = async (sheetId: string): Promise<RouteHistoryEntry[]> => {
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`
         const response = await fetch(csvUrl)
         const csvText = await response.text()
@@ -45,14 +47,41 @@ export default function useParseCSV() {
         })
     }
 
+    // --- XLSX ---
+    const parseLocalXLSX = async (file: File): Promise<RouteHistoryEntry[]> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+
+            reader.onload = (event) => {
+                try {
+                    const data = event.target?.result
+                    if (!data) throw new Error("Empty file")
+
+                    const workbook = XLSX.read(data, { type: 'binary' })
+                    const firstSheetName = workbook.SheetNames[0]
+                    const worksheet = workbook.Sheets[firstSheetName]
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' })
+
+                    const parsed = transformToHistoryEntries(jsonData)
+                    resolve(parsed)
+                } catch (err) {
+                    reject(err)
+                }
+            }
+
+            reader.onerror = (err) => reject(err)
+            reader.readAsBinaryString(file)
+        })
+    }
+
     const transformToHistoryEntries = (data: any[]): RouteHistoryEntry[] => {
         return data.map(item => {
-            const lat = parseFloat(item["Географическая широта"]);
-            const lon = parseFloat(item["Географическая долгота"]);
+            const lat = parseFloat(item["Географическая широта"])
+            const lon = parseFloat(item["Географическая долгота"])
 
             return {
                 address: item["Адрес объекта"] || '—',
-                coords: !isNaN(lat) && !isNaN(lon) ? [lat, lon] : [0, 0], // корректный [number, number]
+                coords: !isNaN(lat) && !isNaN(lon) ? [lat, lon] : [0, 0],
                 worktime: item["Время начала рабочего дня"] && item["Время окончания рабочего дня"]
                     ? `${item["Время начала рабочего дня"]} — ${item["Время окончания рабочего дня"]}`
                     : '—',
@@ -62,12 +91,13 @@ export default function useParseCSV() {
                 transport: item["Транспорт"] || '—',
                 level: item["Уровень клиента"] || '—',
                 stop_duration: ''
-            };
-        });
+            }
+        })
     }
 
     return {
         parseLocalCSV,
-        parsePublicSheet,
+        parsePublicSheetCSV,
+        parseLocalXLSX, // новый метод для Excel
     }
 }
