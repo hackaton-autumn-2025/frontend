@@ -27,6 +27,7 @@ export const useMap = () => {
     const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN'
     const routeCoordsStore = useRouteCoordsStore()
     let mapInstance: L.Map | null = null
+    let markersLayer: L.LayerGroup | null = null
 
     // Инициализация карты
     const initializeMap = (): L.Map | null => {
@@ -89,10 +90,6 @@ export const useMap = () => {
 
             const segmentCoords = coords.slice(i, Math.min(i + segmentLength + 1, coords.length))
 
-            // let color = 'green'
-            // if (segmentCongestion >= 4) color = 'red'
-            // else if (segmentCongestion >= 2) color = 'orange'
-
             L.polyline(segmentCoords, {
                 color: 'green',
                 weight: 6,
@@ -127,6 +124,14 @@ export const useMap = () => {
         };
         infoPanel.addTo(map);
 
+        const validWaypoints = (data.waypoints || []).filter(
+            (wp: any) => wp.location && wp.location.lat != null && wp.location.lon != null
+        )
+        validWaypoints.forEach(wp => {
+            L.marker([wp.location.lat, wp.location.lon])
+                .addTo(markersLayer!)
+                .bindPopup(`<b>${wp.name}</b><br>${wp.hint}`)
+        })
 
         map.fitBounds(L.latLngBounds(coords))
     }
