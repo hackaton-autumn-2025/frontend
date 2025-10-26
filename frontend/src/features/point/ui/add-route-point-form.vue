@@ -119,7 +119,7 @@
       <label for="priority">Уровень клиента</label>
       <v-select
           id="priority"
-          v-model="form.priority"
+          v-model="form.client_level"
           :items="['Стандарт', 'VIP']"
           variant="outlined"
           :rules="[rules.required]"
@@ -138,7 +138,7 @@
     </div>
     <v-row class="pl-3 pt-4 mb-1 ga-3">
       <v-btn class="btn-outline" @click="addPointToRoute">Добавить точку</v-btn>
-      <v-btn class="btn-outline" @click="openCsvDialog">Загрузить CSV</v-btn>
+      <v-btn class="btn-outline" @click="openCsvDialog">Загрузить CSV/XLSX</v-btn>
       <v-btn class="btn-outline" @click="resetForm">Очистить форму</v-btn>
     </v-row>
     <v-row class="pl-3 pt-4 mb-1 ga-3">

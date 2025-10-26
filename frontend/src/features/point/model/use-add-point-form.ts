@@ -1,7 +1,6 @@
 import {reactive, ref} from 'vue'
 import type {RoutePoint} from '@/entities/point/types/interfaces'
 import {useNotificationStore} from "@/shared/store/notification-store"
-import {usePointsStore} from "@/entities/point/store/points-store";
 import {usePointHistoryStore} from "@/entities/point/store/point-history-store";
 import {useRouteOptimization} from "@/entities/route/model/use-route-optimization";
 import {
@@ -12,11 +11,11 @@ import {
 } from "@/entities/route/types/interfaces";
 import {useRouteCoordsStore} from "@/entities/route/store/route-coords-store";
 import useRouteSaveToHistory from "@/entities/route/model/use-route-save-to-history";
+import {VForm} from "vuetify/components";
 
 const useAddPointForm = () => {
     const isValid = ref(false)
     const notificationStore = useNotificationStore()
-    const pointsStore = usePointsStore()
     const pointHistoryStore = usePointHistoryStore()
     const routeCoordsStore = useRouteCoordsStore()
 
@@ -32,23 +31,29 @@ const useAddPointForm = () => {
 
     const form = reactive<Omit<RoutePoint, 'id'>>({
         address: '',
-        latitude: null,
-        longitude: null,
+        start_time: '',
+        latitude: '0',
+        longitude: '0',
         work_start: '09:00',
         work_end: '18:00',
         lunch_start: '13:00',
         lunch_end: '14:00',
         transport_mode: 'Пешком',
-        priority: '',
+        client_level: '',
         time_to_stop: '5 мин',
-        start_time: ''
     })
+    const pointForm = ref<VForm | null>(null)
 
     const transportModeMap = {
         'Пешком': ROUTE_TRANSPORT_MODE.WALK,
         'Автомобиль': ROUTE_TRANSPORT_MODE.CAR
     } as const
+    const clientMap = {
+        STANDART: 'STANDARD',
+        VIP: 'VIP',
+    } as const
 
+    type ClientLevel = keyof typeof clientMap
     type FormTransportMode = keyof typeof transportModeMap
 
     const rules = {
@@ -58,22 +63,26 @@ const useAddPointForm = () => {
     const resetForm = () => {
         Object.assign(form, {
             address: '',
-            latitude: null,
-            longitude: null,
+            start_time: '',
+            latitude: 0,
+            longitude: 0,
             work_start: '09:00',
             work_end: '18:00',
             lunch_start: '13:00',
             lunch_end: '14:00',
             transport_mode: 'Пешком',
-            priority: '',
-            timeToStop: '30 мин',
-            startTime: ''
+            client_level: '',
+            time_to_stop: '5 мин',
         })
+        if (pointForm.value) {
+            pointForm?.value.resetValidation()
+        }
     }
 
     // Парсинг отдельной точки для записи на бэкэнд
     const parsePoint = (p: any): UnoptimizedRoutePoint => {
         const [lat, lon] = p.coords;
+        const level: ClientLevel = p.level ?? p.client_level;
         const [work_start, work_end] = p.worktime.split('—').map((s: string) => s.trim());
         const [lunch_start, lunch_end] = p.lunch.split('—').map((s: string) => s.trim());
 
@@ -84,15 +93,14 @@ const useAddPointForm = () => {
             work_end,
             lunch_start,
             lunch_end,
-            stop_duration: "00:00",
-            client_level: p.level.toUpperCase(),
+            stop_duration: "00:05",
+            client_level: level.toUpperCase(),
         };
     };
 
     // Формирование объекта маршрута на базе объекта формы
     const prepareRouteDataForOptimization = (): UnoptimizedRoute => {
-        console.log(pointHistoryStore.pointHistory)
-        const routes_request: UnoptimizedRoutePoint[] = pointHistoryStore.pointHistory.map(p =>
+        const routes_request: UnoptimizedRoutePoint[] = pointHistoryStore.pointHistory.slice(0, 20).map(p =>
             parsePoint(p)
         );
 
@@ -120,10 +128,13 @@ const useAddPointForm = () => {
 
     // Добавление точки в историю маршрута
     const addPointToRoute = () => {
-        if (!isValid.value) return
+        if (!isValid.value) {
+            pointForm.value?.resetValidation()
+            notificationStore.notifyError('Проверьте корректность введённых данных')
+            return
+        }
 
         const newPoint = {id: crypto.randomUUID(), ...form}
-        pointsStore.addPoint(newPoint)
         pointHistoryStore.addHistoryEntry(newPoint)
 
         resetForm()
@@ -134,6 +145,11 @@ const useAddPointForm = () => {
     // Отправка собранного маршрута на оптимизацию
     const submitRouteToOptimize = () => {
         const routeData = prepareRouteDataForOptimization()
+
+        if (routeData.routes_request.length <= 2) {
+            notificationStore.notifyError('Нужно минимум 2 адреса для оптимизации маршрута!')
+            return
+        }
 
         optimizeRoute(routeData, {
             onSuccess: (data) => {
@@ -163,6 +179,7 @@ const useAddPointForm = () => {
 
     return {
         form,
+        pointForm,
         isValid,
         rules,
         saveRouteToHistory,
