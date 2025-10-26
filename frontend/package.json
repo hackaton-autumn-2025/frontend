@@ -9,13 +9,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "@tanstack/vue-query": "^5.90.5",
     "@types/papaparse": "^5.3.16",
     "axios": "^1.12.2",
     "js-cookie": "^3.0.5",
+    "leaflet": "^1.9.4",
     "papaparse": "^5.5.3",
     "pinia": "^3.0.3",
     "sass": "^1.93.2",
